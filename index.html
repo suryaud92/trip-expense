@@ -195,6 +195,18 @@ async function deleteExpense(eid){
   showToast('Removed.','info');
 }
 
+async function deleteTrip(tid){
+  const trip=state.trips[tid];
+  if(!confirm(`Delete "${trip.name}"? This will also remove all its expenses. This cannot be undone.`)) return;
+  const expsToDelete=Object.values(state.expenses).filter(e=>e.tripId===tid);
+  const updates={};
+  updates['trips/'+tid]=null;
+  expsToDelete.forEach(e=>updates['expenses/'+e.id]=null);
+  await db.ref().update(updates);
+  state.activeTrip=null; state.screen='home';
+  showToast('Trip deleted.','info');
+}
+
 function render(){
   const {screen,user,trips,expenses,users,activeTrip,tab,toast,toastType} = state;
   let html='';
@@ -378,6 +390,7 @@ function render(){
           <div class="metric"><div class="metric-lbl">Total spent</div><div class="metric-val" style="font-size:18px">${fmt(total)}</div></div>
           <div class="metric"><div class="metric-lbl">Expenses</div><div class="metric-val">${tripExp.length}</div></div>
         </div>
+        ${trip.createdBy===user.id?`<button class="btn btn-danger" style="margin-bottom:14px" onclick="deleteTrip('${activeTrip}')">🗑 Delete trip</button>`:''}
         <div class="tabs">
           <div class="tab${tab==='expenses'?' active':''}" onclick="setTab('expenses')">Expenses</div>
           <div class="tab${tab==='members'?' active':''}" onclick="setTab('members')">Members</div>
